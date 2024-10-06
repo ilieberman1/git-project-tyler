@@ -8,8 +8,9 @@ public class TreeTester {
         makeTestFiles();
 
         Git git = new Git();
-        git.makeBlob("test");
-
+        //git.makeBlob("test");
+        git.stage("test");
+        git.commit("Ian", "please work");
         verifyResults();
     }
 

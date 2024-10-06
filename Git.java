@@ -66,11 +66,12 @@ public class Git {
         {
             first = true; //first root tree file created
             String treeHash =  createRootTree(first);
-            commitWriter.write("tree: " + treeHash + "\n");
-            commitWriter.write("parent: " + "\n"); //might want this to be append
-            commitWriter.write("author: " + author + "\n");
-            commitWriter.write("date: " + LocalDate.now() + "\n" );
-            commitWriter.write("message: " + message + "\n");
+            commitWriter.append("tree: " + treeHash + "\n");
+            commitWriter.append("parent: " + "\n"); //might want this to be append
+            commitWriter.append("author: " + author + "\n");
+            commitWriter.append("date: " + LocalDate.now() + "\n" );
+            commitWriter.append("message: " + message + "\n");
+            commitWriter.close();
             makeBlob(commitFile.getPath());
             hash = sha1Hash(commitFile);
             
@@ -84,6 +85,7 @@ public class Git {
             commitWriter.write("author: " + author + "\n");
             commitWriter.write("date: " + LocalDate.now() + "\n" );
             commitWriter.write("message: " + message + "\n");
+            commitWriter.close();
             makeBlob(commitFile.getPath());
             hash = sha1Hash(commitFile);
             //for parent, read head file
@@ -93,7 +95,10 @@ public class Git {
         BufferedWriter headWriter = Files.newBufferedWriter(headFile.toPath());
         headWriter.write(hash);
         headWriter.close();
-        commitWriter.close();
+        //commitWriter.close();
+        File indexFile = new File("./git/index");
+        BufferedWriter indexTextDeleter = Files.newBufferedWriter(indexFile.toPath(),StandardOpenOption.TRUNCATE_EXISTING );
+        indexTextDeleter.close();
         return hash;
         
         
@@ -121,6 +126,7 @@ public class Git {
             treeWriter.write(index);
         if (first)
         {
+            treeWriter.close();
             makeBlob(treeFile.getPath());
             endHash = sha1Hash(treeFile);
             
@@ -130,10 +136,10 @@ public class Git {
             //uncompleted
             BufferedReader reader = Files.newBufferedReader(headFile.toPath());
             String parentHash = reader.readLine();
-            File parentFile = new File("./git/objects" + parentHash);
+            File parentFile = new File("./git/objects/" + parentHash);
             BufferedReader parentReader = Files.newBufferedReader(parentFile.toPath());
             String parentTree = parentReader.readLine().substring(6);
-            File parentTreeFile = new File("./git/objects" + parentTree);
+            File parentTreeFile = new File("./git/objects/" + parentTree);
             BufferedReader parentTreeReader = Files.newBufferedReader(parentTreeFile.toPath());
             String extraText = "";
             while(parentTreeReader.ready())
@@ -142,16 +148,15 @@ public class Git {
             }
             treeWriter.write("\n");// not sure if this line is necessary or not
             treeWriter.append(extraText);
+            treeWriter.close();
             makeBlob(treeFile.getPath());
             endHash = sha1Hash(treeFile);
 
         }
-        treeWriter.close();
+        //treeWriter.close();
         indexReader.close();
         treeFile.delete();
         //truncate all text in index file
-        BufferedWriter indexTextDeleter = Files.newBufferedWriter(indexFile.toPath(),StandardOpenOption.TRUNCATE_EXISTING );
-        indexTextDeleter.close();
         return endHash;
     }
     public void stage (String filePath) throws Exception
@@ -200,14 +205,14 @@ public class Git {
         final String EMPTY_FILE_HASH = "da39a3ee5e6b4b0d3255bfef95601890afd80709";
 
         //ensures that the file can be read before hashing
-        if (file.canRead()) {
+         if (file.canRead()) {
             hash = sha1Hash(file);
             newFile = new File(objectsDirPath + hash);
         }
-        else {
-            hash = EMPTY_FILE_HASH;
-            newFile = new File(objectsDirPath + hash);
-        }
+         else {
+             hash = EMPTY_FILE_HASH;
+             newFile = new File(objectsDirPath + hash);
+         }
 
         // check that the blob & hash pair hasn't already been created
         if (!newFile.exists()) {

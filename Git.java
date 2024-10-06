@@ -11,9 +11,11 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
+import java.time.LocalDate;
 
 public class Git {
 
@@ -25,8 +27,9 @@ public class Git {
         File gitDir = new File(gitDirPath);
         File objectsDir = new File(objectsDirPath);
         File indexFile = new File(indexFilePath);
+        File headFile = new File(gitDirPath + "/HEAD");
 
-        if (gitDir.exists() && objectsDir.exists() && indexFile.exists()) {
+        if (gitDir.exists() && objectsDir.exists() && indexFile.exists() && headFile.exists()) {
             System.out.println("Git Repository already exists");
         } else {
             if (!gitDir.exists()) {
@@ -40,9 +43,113 @@ public class Git {
             if (!indexFile.exists()) {
                 indexFile.createNewFile();
             }
+            if(!headFile.exists())
+            {
+                headFile.createNewFile();
+            }
         }
     }
 
+    public String commit(String author, String message) throws Exception
+    {
+        File commitFile = new File("./git/CommitFile");
+        File headFile = new File("./git/HEAD");
+        if (!commitFile.exists())
+        {
+            commitFile.createNewFile();
+        }
+        BufferedReader reader = Files.newBufferedReader(headFile.toPath());
+        boolean first;
+        BufferedWriter commitWriter = Files.newBufferedWriter(commitFile.toPath());
+        String hash = "";
+        if (!reader.ready())//would imply that there is nothing within the head file
+        {
+            first = true; //first root tree file created
+            String treeHash =  createRootTree(first);
+            commitWriter.write("tree: " + treeHash + "\n");
+            commitWriter.write("parent: " + "\n"); //might want this to be append
+            commitWriter.write("author: " + author + "\n");
+            commitWriter.write("date: " + LocalDate.now() + "\n" );
+            commitWriter.write("message: " + message + "\n");
+            makeBlob(commitFile.getPath());
+            hash = sha1Hash(commitFile);
+            
+
+        }
+        else{
+            first = false;
+            String treehash = createRootTree(first);
+            //for parent, read head file
+        }
+        //update headFile
+        commitFile.delete();
+        BufferedWriter headWriter = Files.newBufferedWriter(headFile.toPath());
+        headWriter.write(hash);
+        return hash;
+        
+        
+        
+    }
+    public String createRootTree(boolean first) throws Exception
+    {
+        File indexFile = new File("./git/index");
+        BufferedReader indexReader = Files.newBufferedReader(indexFile.toPath());
+        File treeFile = new File ("./git/tree");
+        File headFile = new File("./git/HEAD");
+        if (!treeFile.exists())
+        {
+            treeFile.createNewFile();
+        }
+        BufferedWriter treeWriter = Files.newBufferedWriter(treeFile.toPath());
+        String endHash = "";
+        //if this is the first tree file being createdd
+        
+            String index = "";
+            while(indexReader.ready())
+            {
+                index += indexReader.readLine() + "\n";
+            }
+            treeWriter.write(index);
+        if (first)
+        {
+            makeBlob(treeFile.getPath());
+            endHash = sha1Hash(treeFile);
+            
+        }
+        else{
+            //add the last parent file tree onto it
+            //uncompleted
+            BufferedReader reader = Files.newBufferedReader(headFile.toPath());
+            String parentHash = reader.readLine();
+            File parentFile = new File("./git/objects" + parentHash);
+            BufferedReader parentReader = Files.newBufferedReader(parentFile.toPath());
+            String parentTree = parentReader.readLine().substring(6);
+            File parentTreeFile = new File("./git/objects" + parentTree);
+            BufferedReader parentTreeReader = Files.newBufferedReader(parentTreeFile.toPath());
+            String extraText = "";
+            while(parentTreeReader.ready())
+            {
+                extraText += parentTreeReader.readLine() + "\n";
+            }
+            treeWriter.write("\n");// not sure if this line is necessary or not
+            treeWriter.append(extraText);
+            makeBlob(treeFile.getPath());
+            endHash = sha1Hash(treeFile);
+
+        }
+        treeWriter.close();
+        indexReader.close();
+        treeFile.delete();
+        //truncate all text in index file
+        BufferedWriter indexTextDeleter = Files.newBufferedWriter(indexFile.toPath(),StandardOpenOption.TRUNCATE_EXISTING );
+        indexTextDeleter.close();
+        return endHash;
+    }
+    public void stage (String filePath)
+    {
+        makeBlob(filePath);
+        //make sure you create an index file in here if it doesn't exist because you had to delete it's contents above.
+    }
     private static boolean repoExists() {
         String gitDirPath = "./git";
         String objectsDirPath = gitDirPath + "/objects";

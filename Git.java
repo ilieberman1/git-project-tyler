@@ -78,13 +78,22 @@ public class Git {
         }
         else{
             first = false;
-            String treehash = createRootTree(first);
+            String treeHash = createRootTree(first);
+            commitWriter.write("tree: " + treeHash + "\n");
+            commitWriter.write("parent: " + reader.readLine()); //might want this to be append
+            commitWriter.write("author: " + author + "\n");
+            commitWriter.write("date: " + LocalDate.now() + "\n" );
+            commitWriter.write("message: " + message + "\n");
+            makeBlob(commitFile.getPath());
+            hash = sha1Hash(commitFile);
             //for parent, read head file
         }
         //update headFile
         commitFile.delete();
         BufferedWriter headWriter = Files.newBufferedWriter(headFile.toPath());
         headWriter.write(hash);
+        headWriter.close();
+        commitWriter.close();
         return hash;
         
         
@@ -145,7 +154,7 @@ public class Git {
         indexTextDeleter.close();
         return endHash;
     }
-    public void stage (String filePath)
+    public void stage (String filePath) throws Exception
     {
         makeBlob(filePath);
         //make sure you create an index file in here if it doesn't exist because you had to delete it's contents above.

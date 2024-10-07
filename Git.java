@@ -81,7 +81,7 @@ public class Git {
             first = false;
             String treeHash = createRootTree(first);
             commitWriter.write("tree: " + treeHash + "\n");
-            commitWriter.write("parent: " + reader.readLine()); //might want this to be append
+            commitWriter.write("parent: " + reader.readLine() + "\n"); //might want this to be append
             commitWriter.write("author: " + author + "\n");
             commitWriter.write("date: " + LocalDate.now() + "\n" );
             commitWriter.write("message: " + message + "\n");
@@ -146,7 +146,7 @@ public class Git {
             {
                 extraText += parentTreeReader.readLine() + "\n";
             }
-            treeWriter.write("\n");// not sure if this line is necessary or not
+            //treeWriter.write("\n");// not sure if this line is necessary or not
             treeWriter.append(extraText);
             treeWriter.close();
             makeBlob(treeFile.getPath());

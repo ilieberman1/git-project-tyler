@@ -1,5 +1,7 @@
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 
 public class TreeTester {
     public static void main(String[] args) throws Exception {
@@ -11,6 +13,11 @@ public class TreeTester {
         //git.makeBlob("test");
         git.stage("test");
         git.commit("Ian", "please work");
+        git.stage("tree");
+        git.commit("Ian", "I hope this works");
+        git.stage("file1");
+        git.stage("file2");
+        git.commit("Ian", "last check");
         verifyResults();
     }
 
@@ -21,6 +28,12 @@ public class TreeTester {
         File test4 = new File("test/test2/test3");
         File test5 = new File("test/test2/test3/test5");
         File test6 = new File("test/test2/test4");
+        File tree = new File("tree");
+        File treeFile = new File ("tree/treeFile");
+        File newFile = new File("file1");
+        File newFile2 = new File("file2");
+        newFile.createNewFile();
+        newFile2.createNewFile();
 
         test.mkdir();
         test2.createNewFile();
@@ -28,6 +41,11 @@ public class TreeTester {
         test4.mkdir();
         test5.createNewFile();
         test6.createNewFile();
+        tree.mkdir();
+        treeFile.createNewFile();
+        BufferedWriter treeWriter = Files.newBufferedWriter(treeFile.toPath());
+        treeWriter.write("hello this is a new file");
+        treeWriter.close();
     }
 
     /**

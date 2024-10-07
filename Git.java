@@ -17,7 +17,12 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 import java.time.LocalDate;
 
-public class Git {
+public class Git implements GitInterface {
+
+    public void checkout(String commitHash)
+    {
+       //didn't do this method 
+    }
 
     public void init() throws IOException {
         String gitDirPath = "./git";
